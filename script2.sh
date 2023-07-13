@@ -1,56 +1,57 @@
 #!/bin/bash
 
 # Set hostname
-hostnamectl set-hostname autosrv
+hostname="autosrv"
+sudo hostnamectl set-hostname "$hostname"
+echo **SUCCESS**
 
-# Set network configuration
-cat <<EOF > /etc/network/interfaces
-auto lo
+# Set static IP address
+sudo bash -c 'echo "auto lo
 iface lo inet loopback
 
 auto eth0
 iface eth0 inet static
-address 192.168.16.21
-netmask 255.255.255.0
-gateway 192.168.16.1
-dns-nameservers 192.168.16.1
-dns-search home.arpa localdomain
-EOF
+    address 192.168.16.21/24
+    gateway 192.168.16.1
+    dns-nameservers 192.168.16.1
+    dns-search home.arpa localdomain" > /etc/network/interfaces'
+echo **SUCCESS**
 
 # Install required software
-apt-get update
-apt-get install -y openssh-server apache2 squid ufw
+sudo apt update
+sudo apt-get install -y openssh-server apache2 squid ufw
+echo **SUCCESS**
 
 # Configure SSH server
-sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config
-sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config
-systemctl restart ssh
+sudo sed -i '/PasswordAuthentication/d' /etc/ssh/sshd_config
+echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
+systemctl restart sshd
+echo **SUCCESS**
 
-# Configure Apache2
-ufw allow 'Apache Full'
+# Configure Apache2 web server
+ufw allow in "Apache Full"
 systemctl enable apache2
-systemctl restart apache2
+echo **SUCCESS**
 
-# Configure Squid
-cat <<EOF > /etc/squid/squid.conf
-http_port 3128
-acl localnet src 192.168.16.0/24
-http_access allow localnet
-EOF
-systemctl enable squid
-systemctl restart squid
+# Configure Squid web proxy
+sudo bash -c "sed -i 's/http_access deny all/http_access allow all/' /etc/squid/squid.conf"
+echo **SUCCESS**
 
-# Configure Firewall
+# Enable Squid service
+sudo systemctl enable squid
+echo **SUCCESS**
+
+# Configure firewall
 ufw allow ssh
-ufw allow http
 ufw allow https
+ufw allow http
 ufw allow 3128
 ufw enable
+echo **SUCCESS**
 
 # Create user accounts and set up ssh keys
 sudo mkdir /home/dennis
 sudo useradd -m -d /home/dennis -s /bin/bash dennis
-sudo usermod -aG sudo dennis
 sudo mkdir /home/aubrey
 sudo useradd -m -d /home/aubrey -s /bin/bash aubrey
 sudo mkdir /home/captain
@@ -71,6 +72,7 @@ sudo mkdir /home/tiger
 sudo useradd -m -d /home/tiger -s /bin/bash tiger
 sudo mkdir /home/yoda
 sudo useradd -m -d /home/yoda -s /bin/bash yoda
+echo **SUCCESS**
 
 # Set up ssh keys for all users
 for user in dennis aubrey captain snibbles brownie scooter sandy perrier cindy tiger yoda; do
@@ -81,8 +83,7 @@ for user in dennis aubrey captain snibbles brownie scooter sandy perrier cindy t
     sudo chmod 700 /home/$user/.ssh
     sudo chmod 600 /home/$user/.ssh/*
     sudo chown -R $user:$user /home/$user/.ssh
-done
+    sudo chmod 644 "/home/dennis/.ssh/authorized_keys
 
-# Set up sudo access for dennis
-echo 'dennis ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/dennis
-chmod 440 /etc/sudoers.d/dennis
+done
+echo **SUCCESS**
