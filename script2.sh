@@ -3,7 +3,7 @@
 # Set hostname
 hostname="autosrv"
 sudo hostnamectl set-hostname "$hostname"
-echo **SUCCESS**
+echo **SUCCESS! hostname set.**
 
 # Set static IP address
 sudo bash -c 'echo "auto lo
@@ -15,27 +15,27 @@ iface eth0 inet static
     gateway 192.168.16.1
     dns-nameservers 192.168.16.1
     dns-search home.arpa localdomain" > /etc/network/interfaces'
-echo **SUCCESS**
+echo **SUCCESS! Network configuration is done successfully.**
 
 # Install required software
 sudo apt update
 sudo apt-get install -y openssh-server apache2 squid ufw
-echo **SUCCESS**
+echo **SUCCESS! Required softwares are installed.**
 
 # Configure SSH server
 sudo sed -i '/PasswordAuthentication/d' /etc/ssh/sshd_config
 echo "PasswordAuthentication no" >> /etc/ssh/sshd_config
 systemctl restart sshd
-echo **SUCCESS**
+echo **SUCCESS! SSH server is configured properly.**
 
 # Configure Apache2 web server
 ufw allow in "Apache Full"
 systemctl enable apache2
-echo **SUCCESS**
+echo **SUCCESS! Apache 2 configured successfully.**
 
 # Configure Squid web proxy
 sudo bash -c "sed -i 's/http_access deny all/http_access allow all/' /etc/squid/squid.conf"
-echo **SUCCESS**
+echo **SUCCESS! Squid web set properly.**
 
 # Enable Squid service
 sudo systemctl enable squid
@@ -47,7 +47,7 @@ ufw allow https
 ufw allow http
 ufw allow 3128
 ufw enable
-echo **SUCCESS**
+echo **SUCCESS! All firewalls configured.**
 
 # Create user accounts and set up ssh keys
 sudo mkdir /home/dennis
@@ -72,18 +72,18 @@ sudo mkdir /home/tiger
 sudo useradd -m -d /home/tiger -s /bin/bash tiger
 sudo mkdir /home/yoda
 sudo useradd -m -d /home/yoda -s /bin/bash yoda
-echo **SUCCESS**
+echo **SUCCESS! Users added successfully.**
 
 # Set up ssh keys for all users
 for user in dennis aubrey captain snibbles brownie scooter sandy perrier cindy tiger yoda; do
     sudo mkdir /home/$user/.ssh
     sudo ssh-keygen -t rsa -f /home/$user/.ssh/id_rsa -N ''
-    sudo ssh-keygen -t ed25519 -f /home/$user/.ssh/id_ed25519 -N ''
+    sudo ssh-keygen -t ed25519 -f -N ''
     sudo cat /home/$user/.ssh/*.pub > /home/$user/.ssh/authorized_keys
-    sudo chmod 700 /home/$user/.ssh
-    sudo chmod 600 /home/$user/.ssh/*
+    sudo chmod 700 ~/.ssh
+    sudo chmod 600 ~/.ssh/*
     sudo chown -R $user:$user /home/$user/.ssh
     sudo chmod 644 "/home/dennis/.ssh/authorized_keys
 
 done
-echo **SUCCESS**
+echo **SUCCESS! The system is  modified with the required configuration. **
